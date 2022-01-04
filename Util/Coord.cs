@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Drawing;
 
-namespace PDF_Edit_Froms.Util
+namespace PDF_Edit_Forms.Util
 {
     class Coord
     {
