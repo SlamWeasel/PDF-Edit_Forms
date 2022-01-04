@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using PdfSharp.Pdf.IO;
 using PdfSharp.Drawing;
 using Microsoft.VisualBasic.FileIO;
 
-namespace PDF_Edit_Froms.Controls
+namespace PDF_Edit_Forms.Controls
 {
 #pragma warning disable IDE0052 // Ungelesene private Member entfernen
 #pragma warning disable IDE0044 // Modifizierer "readonly" hinzufügen
