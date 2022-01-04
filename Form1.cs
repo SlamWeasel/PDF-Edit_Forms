@@ -1,11 +1,11 @@
-﻿using PDF_Edit_Froms.Util;
+using PDF_Edit_Forms.Util;
 using System.Windows.Forms;
 
-namespace PDF_Edit_Froms
+namespace PDF_Edit_Forms
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
         }
