@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Windows.Forms;
 
-namespace PDF_Edit_Froms
+namespace PDF_Edit_Forms
 {
     static class Program
     {
@@ -13,7 +13,7 @@ namespace PDF_Edit_Froms
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            Application.Run(new MainForm());
         }
     }
 }
