@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace PDF_Edit_Froms.Controls
+namespace PDF_Edit_Forms.Controls
 {
     class IconButton : Label
     {
@@ -38,8 +38,7 @@ namespace PDF_Edit_Froms.Controls
         {
             base.OnMouseDown(e);
 
-            Rectangle rec = new Rectangle(this.Location.X - 3, this.Location.Y - 3, this.Size.Width + 6, this.Size.Height + 6);
-            Bounds = rec;
+            Bounds = new Rectangle(this.Location.X - 3, this.Location.Y - 3, this.Size.Width + 6, this.Size.Height + 6);
 
             this.Refresh();
         }
@@ -47,8 +46,7 @@ namespace PDF_Edit_Froms.Controls
         {
             base.OnMouseUp(e);
 
-            Rectangle rec = new Rectangle(this.Location.X + 3, this.Location.Y + 3, this.Size.Width - 6, this.Size.Height - 6);
-            Bounds = rec;
+            Bounds = new Rectangle(this.Location.X + 3, this.Location.Y + 3, this.Size.Width - 6, this.Size.Height - 6);
 
             this.Refresh();
         }
