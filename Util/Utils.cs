@@ -1,12 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 
-namespace PDF_Edit_Froms.Util
+namespace PDF_Edit_Forms.Util
 {
     public abstract class Utils
     {
+        public static List<char> FileNameBlacklist = new List<char>(){'\\','\"','/',':','*','?','<','>','|','%' };
         private static Random a = new Random();
 
         /// <summary>
@@ -24,20 +25,11 @@ namespace PDF_Edit_Froms.Util
                 for (; ; )
                 {
                     insert = (char)a.Next(33,127);
-                    if (insert == 92  ||
-                        insert == '/' ||
-                        insert == ':' ||
-                        insert == '*' ||
-                        insert == '?' ||
-                        insert == 34  ||
-                        insert == '<' ||
-                        insert == '>' ||
-                        insert == '|' ||
-                        insert == '%')
+                    if (FileNameBlacklist.Contains(insert))
                         continue;
                     else break;
                 }
-                OUT = OUT + insert;
+                OUT += insert;
             }
 
             return OUT;
@@ -54,7 +46,16 @@ namespace PDF_Edit_Froms.Util
                 if (!File.Exists(path))
                 {
                     FileStream myFile = File.Create(path);
-                    myFile.Close();
+                }
+                else
+                {
+                    using (FileStream myFile = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.None))
+                        if(myFile.Length > 0)
+                        {
+                            myFile.Close();
+                            myFile.Flush();
+                            myFile.Dispose();
+                        }
                 }
             }
             catch(Exception ex)
@@ -75,7 +76,7 @@ namespace PDF_Edit_Froms.Util
                     {
                         File.Delete(f.FullName);
                     }
-                    catch (Exception) { continue; }
+                    catch (Exception) { }
         }
 
         /// <summary>
@@ -90,20 +91,13 @@ namespace PDF_Edit_Froms.Util
             try
             {
                 using (FileStream stream = file.Open(FileMode.Open, FileAccess.Read, FileShare.None))
-                {
                     stream.Close();
-                }
             }
             catch (IOException)
             {
-                //the file is unavailable because it is:
-                //still being written to
-                //or being processed by another thread
-                //or does not exist (has already been processed)
                 return true;
             }
 
-            //file is not locked
             return false;
         }
 
@@ -131,15 +125,19 @@ namespace PDF_Edit_Froms.Util
         {
             string size = "0 Byte";
 
-            FileInfo fi = new FileInfo(file);
-            if (fi.Length < 1500)
-                size = $"{fi.Length} Byte";
-            else if (fi.Length < 1500 * 1024)
-                size = $"{Math.Round(fi.Length / 1024.0, 2)} KB";
-            else if (fi.Length < 1500 * 1024 * 1024)
-                size = $"{Math.Round(fi.Length / 1024.0 / 1024.0, 2)} MB";
-            else
-                size = $"{Math.Round(fi.Length / 1024.0 / 1024.0 / 1024.0, 2)} GB";
+            try
+            {
+                FileInfo fi = new FileInfo(file);
+                if (fi.Length < 1500)
+                    size = $"{fi.Length} Byte";
+                else if (fi.Length < 1500 * 1024)
+                    size = $"{Math.Round(fi.Length / 1024.0, 2)} KB";
+                else if (fi.Length < 1500 * 1024 * 1024)
+                    size = $"{Math.Round(fi.Length / 1024.0 / 1024.0, 2)} MB";
+                else
+                    size = $"{Math.Round(fi.Length / 1024.0 / 1024.0 / 1024.0, 2)} GB";
+            }
+            catch (Exception) { }
 
             return size;
         }
