@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31512.422
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PDF-Edit_Froms", "PDF-Edit_Froms.csproj", "{90BA9236-8A00-4488-99A0-4D98CE1E1C38}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PDF-Edit_Forms", "PDF-Edit_Forms.csproj", "{90BA9236-8A00-4488-99A0-4D98CE1E1C38}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
