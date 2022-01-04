@@ -1,14 +1,18 @@
-﻿using PdfSharp.Pdf;
+using PDFLibNet64;
+using PdfSharp.Pdf;
 using PdfSharp.Pdf.IO;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Windows.Forms;
 
-namespace PDF_Edit_Froms.Util
+namespace PDF_Edit_Forms.Util
 {
 #pragma warning disable IDE1006 // Benennungsstile
     class PdfActions
     {
+        const string TEMP = @"C:\Temp\PDFEditson.pdf";
+
         /// <summary>
         /// Fügt alle Dokumente in dem Array zu einem zusammen
         /// </summary>
@@ -33,21 +37,26 @@ namespace PDF_Edit_Froms.Util
         /// </summary>
         /// <param name="pageNumbers">List of the pages, that get removed</param>
         /// <param name="ogPath">Pfad der Datei</param>
-        public static void removePages(List<int> pageNumbers, string ogPath)
+        public static PdfDocument removePages(PdfDocument doc, List<int> pageNumbers, PDFWrapper wrapRemove)
         {
-            PdfDocument reduced = new PdfDocument();
-            PdfDocument source = PdfReader.Open(ogPath);
+            PdfDocument reduced = doc;
 
-            int i = 0;
-            foreach(PdfPage p in source.Pages)
+            doc.Close();
+            Utils.freeFile(TEMP);
+            while (Utils.IsFileLocked(TEMP))
+                Console.WriteLine("Datei lädt noch");
+            doc.Dispose();
+
+            int buffer = 0;
+            foreach(int p in pageNumbers)
             {
-                if (!pageNumbers.Contains(i))
-                    reduced.AddPage(p);
-                i++;
+                reduced.Pages.RemoveAt(p - buffer);
+                buffer++;
             }
 
-            source.Close();
             tempSaveFile(reduced, PDFOperations.RemovePages);
+
+            return reduced;
         }
 
         /// <summary>
@@ -130,7 +139,7 @@ namespace PDF_Edit_Froms.Util
         {
             try
             {
-                doc.Save(@"C:\Temp\PDFEditson.pdf");
+                doc.Save(TEMP);
             }
             catch (Exception w)
             {
@@ -143,7 +152,7 @@ namespace PDF_Edit_Froms.Util
         /// <param name="doc"></param>
         /// <param name="path"></param>
         /// <param name="operation"></param>
-        private static void saveFileTo(PdfDocument doc, string path, int operation)
+        public static void saveFileTo(PdfDocument doc, string path, int operation)
         {
             try
             {
@@ -160,30 +169,38 @@ namespace PDF_Edit_Froms.Util
             switch (errorCase)
             {
                 case PDFOperations.CombineDocuments:
-                    MessageBox.Show(w.Message + "\n" + w.StackTrace,
+                    MessageBox.Show(
                         "Beim Versuch die Dateien zusammenzufügen ist ein Fehler aufgetreten, bitte versuchen Sie es erneut.\n" +
-                        "Sollte der Fehler weiterhin bestehen, machen Sie einen Screenshot dieses Fehlers und senden sie ihn an die EDV-Abteilung:\n",
+                        "Sollte der Fehler weiterhin bestehen, machen Sie einen Screenshot dieses Fehlers und senden sie ihn an die EDV-Abteilung:\n\n\n" +
+                        w.Message + "\n" + w.StackTrace,
+                        "Dateifehler",
                         MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
+                        MessageBoxIcon.Error); ;
                     break;
                 case PDFOperations.RemovePages:
-                    MessageBox.Show(w.Message + "\n" + w.StackTrace,
+                    MessageBox.Show(
                         "Beim Versuch die Seiten zu entfernen ist ein Fehler aufgetreten, bitte versuchen Sie es erneut.\n" +
-                        "Sollte der Fehler weiterhin bestehen, machen Sie einen Screenshot dieses Fehlers und senden sie ihn an die EDV-Abteilung:\n",
+                        "Sollte der Fehler weiterhin bestehen, machen Sie einen Screenshot dieses Fehlers und senden sie ihn an die EDV-Abteilung:\n\n\n" +
+                        w.Message + "\n" + w.StackTrace,
+                        "Dateifehler",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                     break;
                 case PDFOperations.SplitDocument:
-                    MessageBox.Show(w.Message + "\n" + w.StackTrace,
+                    MessageBox.Show(
                         "Beim Versuch einen der Teile zu speichern ist ein Fehler aufgetreten, bitte versuchen Sie es erneut.\n" +
-                        "Sollte der Fehler weiterhin bestehen, machen Sie einen Screenshot dieses Fehlers und senden sie ihn an die EDV-Abteilung:\n",
+                        "Sollte der Fehler weiterhin bestehen, machen Sie einen Screenshot dieses Fehlers und senden sie ihn an die EDV-Abteilung:\n\n\n" +
+                        w.Message + "\n" + w.StackTrace,
+                        "Dateifehler",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                     break;
                 default:
-                    MessageBox.Show(w.Message + "\n" + w.StackTrace,
+                    MessageBox.Show(
                         "Es ist ein unerwarteter Fehler aufgetreten.\n" +
-                        "Sollte der Fehler weiterhin bestehen, machen Sie einen Screenshot dieses Fehlers und senden sie ihn an die EDV-Abteilung:\n",
+                        "Sollte der Fehler weiterhin bestehen, machen Sie einen Screenshot dieses Fehlers und senden sie ihn an die EDV-Abteilung:\n\n\n" +
+                        w.Message + "\n" + w.StackTrace,
+                        "Dateifehler",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                     break;
