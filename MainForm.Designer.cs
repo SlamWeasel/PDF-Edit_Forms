@@ -1,30 +1,32 @@
-﻿using PDF_Edit_Froms.Util;
-using PDF_Edit_Froms.Controls;
+using PDF_Edit_Forms.Util;
+using PDF_Edit_Forms.Controls;
 using System;
 using System.IO;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using PDF_Edit_Froms.Forms;
+using PDF_Edit_Forms.Forms;
+using Microsoft.Win32;
 
 #pragma warning disable IDE0044 // Modifizierer "readonly" hinzufügen
 #pragma warning disable IDE1006 // Benennungsstile
-namespace PDF_Edit_Froms
+namespace PDF_Edit_Forms
 {
-    partial class Form1
+    partial class MainForm
     {
         /// <summary>
         /// Erforderliche Designervariable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
-        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
         //private Coord lastLoc = new Coord(0, 0, "lastLoc");
         private Color   GrayColor = Color.FromArgb(100, 100, 100),
                         DarkGrayColor = Color.FromArgb(50, 50, 50),
                         GrayFontColor = Color.FromArgb(200, 200, 200),
                         inb4;
-        private string startupFile = "", settingsFilePath = Application.StartupPath + "\\settings.txt";
+        private string  startupFile = @"\\nt-file\home$\evlehmann\Eigene Dateien\My Pictures\Dokumente\ÄÖÜßäöü.pdf", 
+                        settingsFilePath = Application.StartupPath + "\\settings.txt";
         private Dictionary<string, string> settings = new Dictionary<string, string>();
         public bool isDarkMode = true;
 
@@ -51,12 +53,8 @@ namespace PDF_Edit_Froms
         /// </summary>
         private void InitializeComponent()
         {
-            if (!File.Exists(settingsFilePath))
-            {
-                File.Create(settingsFilePath);
-                while (Utils.IsFileLocked(settingsFilePath)) Utils.freeFile(startupFile);
-                File.WriteAllText(settingsFilePath, @"darkMode;true" + "\n" + @"startupFile;\\nt-file\home$\evlehmann\Eigene Dateien\My Pictures\Dokumente\ÄÖÜßäöü.pdf");
-            }
+            if (!File.Exists(settingsFilePath) || File.ReadAllText(settingsFilePath).Length == 0)
+                File.WriteAllText(settingsFilePath, Settings.darkMode + ";true" + "\n" + Settings.startupFile + @";" + startupFile + "\n" + Settings.userChanged + ";False");
             foreach (string s in File.ReadAllLines(settingsFilePath))
                 settings.Add(s.Split(';')[0], s.Split(';')[1]);
 
@@ -119,6 +117,15 @@ namespace PDF_Edit_Froms
                                         (int)Math.Round(this.Width / 9.0))
             };
             openFile.Click += new EventHandler(onOpenFileClick);
+            openFile.MouseUp += new MouseEventHandler(onOpenFileMouseUp);
+            ContextMenu openFileContext = new ContextMenu(menuItems: new MenuItem[] { new MenuItem("Bitch", new MenuItem[] { new MenuItem("Science"), new MenuItem("Yeah") }), new MenuItem("Lasagna") });
+            openFile.ContextMenu = openFileContext;
+            ToolTip tT1 = new ToolTip();
+            tT1.AutoPopDelay = 7500;
+            tT1.InitialDelay = 1500;
+            tT1.ReshowDelay = 500;
+            tT1.ToolTipTitle = "Öffnen";
+            tT1.SetToolTip(openFile, "Wählen Sie ein neues Dokument von Ihrem Computer aus, um dieses zu öffnen");
             combine = new IconButton((Icon)resources.GetObject("$this.PDF_File_Combine_Def"), (Icon)resources.GetObject("$this.PDF_File_Combine_Hov"))
             {
                 Bounds = new Rectangle( (int)Math.Round(this.Width / 6.0),
@@ -127,6 +134,12 @@ namespace PDF_Edit_Froms
                                         (int)Math.Round(this.Width / 9.0))
             };
             combine.Click += new EventHandler(onCombineClick);
+            ToolTip tT2 = new ToolTip();
+            tT2.AutoPopDelay = 7500;
+            tT2.InitialDelay = 1500;
+            tT2.ReshowDelay = 500;
+            tT2.ToolTipTitle = "Kombinieren";
+            tT2.SetToolTip(combine, "Fügen Sie an das geöffnete Dokument Seiten aus anderen Dokumenten, oder sogar ganze Dokumente, an");
             split = new IconButton((Icon)resources.GetObject("$this.PDF_File_Seperate_Def"), (Icon)resources.GetObject("$this.PDF_File_Seperate_Hov"))
             {
                 Bounds = new Rectangle( (int)Math.Round(this.Width / 110.0),
@@ -134,6 +147,12 @@ namespace PDF_Edit_Froms
                                         (int)Math.Round((this.Width / 9.0) * 1.5),
                                         (int)Math.Round(this.Width / 9.0))
             };
+            ToolTip tT3 = new ToolTip();
+            tT3.AutoPopDelay = 7500;
+            tT3.InitialDelay = 1500;
+            tT3.ReshowDelay = 500;
+            tT3.ToolTipTitle = "Aufteilen";
+            tT3.SetToolTip(split, "Teilen Sie das geöffnete Dokument automatisch in mehrere Teile auf nach verschiedenen Faktoren");
             edit = new IconButton((Icon)resources.GetObject("$this.PDF_File_Edit_Def"), (Icon)resources.GetObject("$this.PDF_File_Edit_Hov"))
             {
                 Bounds = new Rectangle( (int)Math.Round(this.Width / 3.0),
@@ -141,6 +160,12 @@ namespace PDF_Edit_Froms
                                         (int)Math.Round((this.Width / 9.0) * 1.5),
                                         (int)Math.Round(this.Width / 9.0))
             };
+            ToolTip tT4 = new ToolTip();
+            tT4.AutoPopDelay = 7500;
+            tT4.InitialDelay = 1500;
+            tT4.ReshowDelay = 500;
+            tT4.ToolTipTitle = "Editieren";
+            tT4.SetToolTip(edit, "Bearbeiten sie das geöffnete Dokument indem sie Seiten drehen, verschieben oder entfernen");
             #endregion
 
 
@@ -153,15 +178,27 @@ namespace PDF_Edit_Froms
 
 
 
-            if (!Convert.ToBoolean(settings[Settings.darkMode]))
+            if ((!Convert.ToBoolean(settings[Settings.userChanged])
+                && (int)Registry.CurrentUser.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize").GetValue("SystemUsesLightTheme") == 1)
+                ||
+                (Convert.ToBoolean(settings[Settings.userChanged]) &&
+                !Convert.ToBoolean(settings[Settings.darkMode])))
             {
                 isDarkMode = false;
+                settings[Settings.darkMode] = false.ToString();
+                UpdateSettingsFile();
                 ColorSwitch();
+            }
+            else
+            {
+                settings[Settings.darkMode] = true.ToString();
+                UpdateSettingsFile();
             }
 
             this.CenterToScreen();
             this.Refresh();
         }
+
 
 
 
@@ -274,11 +311,39 @@ namespace PDF_Edit_Froms
         {
             Utils.CleanUp();
         }
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == (Keys.Control | Keys.S))
+            {
+                SaveFileDialog saveFileDialog = new SaveFileDialog()
+                {
+                    Filter = "Portable Document Format (*.pdf)|*.pdf"
+                };
+                DialogResult result = saveFileDialog.ShowDialog();
+                if (result == DialogResult.OK)
+                {
+                    PdfActions.saveFileTo(view.document, saveFileDialog.FileName, 2);
+                    _ = MessageBox.Show("Dokument erfolgreich unter " + saveFileDialog.FileName + " gespeichert!");
+                }
+
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
         #endregion
 
         #region Button-Funktionen
+        public DateTime wasOpenFileClicked = DateTime.Today;
+
         private void onOpenFileClick(object sender, EventArgs e)
         {
+            wasOpenFileClicked = DateTime.Now;
+        }
+        private void onOpenFileMouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right || wasOpenFileClicked.AddSeconds(1) < DateTime.Now)
+                return;
+
             openFileDialog = new OpenFileDialog()
             {
                 Filter = "Portable Document Format (*.pdf)|*.pdf"
@@ -354,6 +419,7 @@ namespace PDF_Edit_Froms
                 else if(e.Location.X > ((Control)sender).Width - 60)
                 {
                     isDarkMode = !isDarkMode;
+                    settings[Settings.userChanged] = true.ToString();
                     ColorSwitch();
                     this.Refresh();
 
@@ -526,7 +592,7 @@ namespace PDF_Edit_Froms
                     WindowBar.BackColor = Color.FromArgb(55, 55, 55);
                     WindowBar.ForeColor = GrayFontColor;
                     fileInfo.ForeColor = GrayFontColor;
-
+                    settings[Settings.darkMode] = true.ToString();
                     break;
 
                 case false: // Light Theme
@@ -536,17 +602,28 @@ namespace PDF_Edit_Froms
                     WindowBar.BackColor = Color.FromArgb(200, 200, 200);
                     WindowBar.ForeColor = DarkGrayColor;
                     fileInfo.ForeColor = DarkGrayColor;
-
+                    settings[Settings.darkMode] = false.ToString();
                     break;
             }
+
+            UpdateSettingsFile();
+        }
+        private void UpdateSettingsFile()
+        {
+            File.WriteAllText(settingsFilePath, Settings.ToString(settings));
         }
     }
 
-    static class Settings
+    abstract class Settings
     {
-        public const string 
-            darkMode = "darkMode", 
-            startupFile = "startupFile";
+        public const string
+            darkMode = "darkMode",
+            startupFile = "startupFile",
+            userChanged = "userChanged";
+
+        public static string ToString(Dictionary<string, string> settings)
+            => darkMode + ";" + settings[darkMode] + "\n" + startupFile + ";" + settings[startupFile] + "\n" + userChanged + ";" + settings[userChanged];
+
     }
 }
 
