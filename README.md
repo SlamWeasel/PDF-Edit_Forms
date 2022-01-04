@@ -1,4 +1,4 @@
-# PDF-Edit_Froms
+# PDF-Edit_Forms
 Simpel gestaltetes Programm zur einfachen Bearbeitung von PDF-Dateien
 
 Verwendete Bibliotheken:
