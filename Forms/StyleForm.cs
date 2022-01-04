@@ -1,18 +1,18 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace PDF_Edit_Froms.Util
+namespace PDF_Edit_Forms.Util
 {
     /// <summary>
     /// Vordesigntes Fenster für den PDF-Editor
     /// </summary>
     class StyleForm : Form
     {
-        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
         private Color   GrayColor = Color.FromArgb(100, 100, 100),
                         DarkGrayColor = Color.FromArgb(50, 50, 50),
                         GrayFontColor = Color.FromArgb(200, 200, 200);
