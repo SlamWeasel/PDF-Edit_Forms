@@ -1,22 +1,23 @@
-﻿using PDFLibNet64;
+using PDFLibNet64;
 using PdfSharp.Pdf;
 using PdfSharp.Pdf.IO;
-using PDF_Edit_Froms.Util;
+using PDF_Edit_Forms.Util;
 using System;
 using System.IO;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using PdfSharp.Pdf.Advanced;
 
-namespace PDF_Edit_Froms.Controls
+namespace PDF_Edit_Forms.Controls
 {
     class PDFDisplay : Panel
     {
         public string Path { get; set; } = "";
         public bool Loading { get; private set; } = false;
 
-        private PDFWrapper doc = new PDFWrapper();
-        private PdfDocument document = new PdfDocument();
+        private PDFWrapper docWrapper = new PDFWrapper();
+        public PdfDocument document = new PdfDocument();
         private PdfPages documentPages;
         private List<Image> thumbnails = new List<Image>();
         private List<Control> pageThumbs = new List<Control>();
@@ -43,8 +44,8 @@ namespace PDF_Edit_Froms.Controls
 
         public void setPath(string path)
         {
-            doc.Dispose();
-            doc = new PDFWrapper();
+            docWrapper.Dispose();
+            docWrapper = new PDFWrapper();
 
             if (Path != "")
             {
@@ -71,13 +72,40 @@ namespace PDF_Edit_Froms.Controls
 
             this.Controls.Clear();
             pageThumbs.Clear();
-            thumbnails.Clear();
             this.Controls.Add(LoadingBox);
             try
             {
                 FileInfo fi = new FileInfo(Path);
                 this.Parent.Controls.Find("FileInfoBar", false)[0].Text = $"Name: {fi.Name} | Größe: {Util.Utils.getSizeAsString(Path)} | Ordner: {fi.DirectoryName}";
             }catch(Exception){ }
+
+            this.Refresh();
+
+            docWrapper.LoadPDF(@"C:\Temp\PDFPagey.pdf");
+
+            Initialize();
+        }
+        public void setDocument(PdfDocument _document)
+        {
+            docWrapper.Dispose();
+            docWrapper = new PDFWrapper();
+            document.Close();
+
+            Utils.freeFile(Path);
+            this.Invoke(new Action(() => CreateLoadingBox()));
+            while (Utils.IsFileLocked(@"C:\Temp\PDFEditson.pdf"))
+            {
+                Console.WriteLine("Datei lädt noch");
+                Utils.freeFile(@"C:\Temp\PDFEditson.pdf");
+            }
+
+            document = _document;
+            docWrapper.LoadPDF(@"C:\Temp\PDFEditson.pdf");
+            documentPages = document.Pages;
+
+            this.Controls.Clear();
+            pageThumbs.Clear();
+            this.Controls.Add(LoadingBox);
 
             this.Refresh();
 
@@ -91,22 +119,23 @@ namespace PDF_Edit_Froms.Controls
 
             int i = 0;
 
-            doc.LoadPDF(@"C:\Temp\PDFPagey.pdf");
-
-            foreach (PdfPage p in documentPages)
+            foreach (PdfPage p in document.Pages)
             {
-                Console.WriteLine($"Sharp: { p.Width}, {p.Height}");
+                Console.WriteLine($"Sharp: {p.Width}, {p.Height}");
 
-                thumbnails.Add(RenderPage(doc, i, (int)Math.Round(p.Width.Value), (int) Math.Round(p.Height.Value)));
+                thumbnails.Add(RenderPage(docWrapper, i, (int)Math.Round(p.Width.Value), (int) Math.Round(p.Height.Value)));
 
                 int calculatedHeight = (int)Math.Round((((double)(this.Width - 20)) / thumbnails[i].Width) * (double)thumbnails[i].Height);
                 PictureBox background = new PictureBox()
                 {
+                    Name = (i + 1).ToString(),
                     BackColor = this.BackColor,
                     Image = thumbnails[i],
                     Bounds = new Rectangle(10, nowAt, this.Width - 20, calculatedHeight),
                     SizeMode = PictureBoxSizeMode.StretchImage
                 };
+                background.ContextMenu = CreateContext(background);
+
                 nowAt += calculatedHeight + 20;
 
                 pageThumbs.Add(background);
@@ -118,7 +147,7 @@ namespace PDF_Edit_Froms.Controls
                     LoadingBox.Refresh();
                 }
 
-                OnLoading(new PDFLoadingEventArgs(new FileInfo(Path), documentPages.Count, i, !Loading));
+                OnLoading(new PDFLoadingEventArgs(new FileInfo(Path), document.Pages.Count, i, !Loading));
             }
 
             this.Controls.Clear();
@@ -128,7 +157,7 @@ namespace PDF_Edit_Froms.Controls
             this.Refresh();
             Loading = false;
 
-            OnLoading(new PDFLoadingEventArgs(new FileInfo(Path), documentPages.Count, i, !Loading));
+            OnLoading(new PDFLoadingEventArgs(new FileInfo(Path), document.Pages.Count, i, !Loading));
         }
 
         private string ChangeLoad(int atm)
@@ -162,33 +191,6 @@ namespace PDF_Edit_Froms.Controls
                 Name = "LoadingBox"
             };
         }
-
-
-        private void onSizeChanged(object sender, EventArgs e)
-        {
-            if (oldSize.Width == 0) return;
-
-            double fac = this.Size.Width / (double)oldSize.Width;
-            scrollFac = (fac > 1) ? 1.6f : 1;
-
-            foreach (Control c in this.Controls)
-                c.Bounds = new Rectangle(c.Location.X, (int) Math.Round(c.Location.Y * fac), (int)Math.Round(c.Size.Width * fac), (int)Math.Round(c.Size.Height * fac));
-
-            oldSize = this.Size;
-        }
-        /// <summary>
-        /// Das Delta des MouseEvents ist -120 beim runterscrollen und 120 beim hochscrollen
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        public void onScroll(object sender, MouseEventArgs e)
-        {
-            if(Controls[0].Location.Y < 0 || e.Delta < 0)
-                foreach(Control c in this.Controls)
-                    c.Location = new Point(c.Location.X, c.Location.Y + (int)Math.Round((e.Delta/5)*scrollFac));
-            this.Refresh();
-        }
-
         /// <summary>
         /// Gibt ein nutzbares <see cref="Image"/>-Objekt einer PDF-Datei zurück, ohne dieses als extra Datei hinterlegen zu müssen
         /// </summary>
@@ -229,11 +231,108 @@ namespace PDF_Edit_Froms.Controls
                 return buffer;
             }
         }
+        ContextMenu CreateContext(PictureBox thumb)
+        {
+            MenuItem[] items = new MenuItem[]
+            {
+                new MenuItem("Seite " + thumb.Name)
+                {
+                    Enabled = false,
+                    DefaultItem = true,
+                    BarBreak = true,
+                },
+                new MenuItem("Drehen", new MenuItem[] 
+                { 
+                    new MenuItem("Nach links"), 
+                    new MenuItem("Nach rechts"),
+                    new MenuItem("180°")
+                }),
+                new MenuItem("Verschieben", new MenuItem[]
+                {
+                    new MenuItem("Nach oben"),
+                    new MenuItem("Nach unten"),
+                    new MenuItem("An den Anfang"),
+                    new MenuItem("An das Ende")
+                }),
+                new MenuItem("Entfernen", new EventHandler(onContextClickRemove))
+            };
+
+            ContextMenu contextMenu = new ContextMenu(items)
+            {
+                Name = "thumbnailContext_" + thumb.Name
+            };
+
+            return contextMenu;
+        }
+
+        private void onSizeChanged(object sender, EventArgs e)
+        {
+            if (oldSize.Width == 0) return;
+
+            double fac = this.Size.Width / (double)oldSize.Width;
+            scrollFac = (fac > 1) ? 1.6f : 1;
+
+            foreach (Control c in this.Controls)
+                c.Bounds = new Rectangle(c.Location.X, (int) Math.Round(c.Location.Y * fac), (int)Math.Round(c.Size.Width * fac), (int)Math.Round(c.Size.Height * fac));
+
+            oldSize = this.Size;
+        }
+        /// <summary>
+        /// Das Delta des MouseEvents ist -120 beim runterscrollen und 120 beim hochscrollen
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public void onScroll(object sender, MouseEventArgs e)
+        {
+            if (Path == "")
+                return;
+
+            if (Controls[0].Location.Y < 0 || e.Delta < 0)
+                foreach(Control c in this.Controls)
+                    c.Location = new Point(c.Location.X, c.Location.Y + (int)Math.Round((e.Delta/5)*scrollFac));
+            this.Refresh();
+        }
+        public void onContextClickRemove(object sender, EventArgs e)
+        {
+            setDocument(PdfActions.removePages(document, new List<int> { int.Parse(((MenuItem)sender).Parent.Name.Substring(17)) - 1 }, docWrapper));
+        }
 
         private void OnLoading(PDFLoadingEventArgs e)
         {
             if(LoadingFinishedEventHandler != null)
                 LoadingFinishedEventHandler(this, e);
+            if (e.Finished)
+            {
+                try
+                {
+                    foreach (PdfPage p in documentPages)
+                    {
+                        PdfDictionary pageResources = p.Elements.GetDictionary("/Resources");
+                        PdfDictionary xObjects = pageResources.Elements.GetDictionary("/XObject");
+                        ICollection<PdfItem> items = xObjects.Elements.Values;
+                        foreach (PdfItem item in items)
+                        {
+                            PdfDictionary xObject = (PdfDictionary)((PdfReference)item).Value;
+                            string xObjectName = string.Join("\n", xObject.Elements) + "\n----------";
+                            Console.WriteLine(xObjectName);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                //Console.WriteLine("Done!");
+            }
+
+            /*
+            foreach (var obj in document.Internals.FirstDocumentGuid.ToString())
+            {
+                Console.WriteLine("{");
+                Console.WriteLine(obj.ToString());
+                Console.WriteLine(obj.Reference.ToString());
+                Console.WriteLine("}");
+            }*/
         }
     }
 
