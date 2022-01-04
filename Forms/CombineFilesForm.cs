@@ -1,4 +1,4 @@
-﻿using PDF_Edit_Froms.Util;
+using PDF_Edit_Forms.Util;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace PDF_Edit_Froms.Forms
+namespace PDF_Edit_Forms.Forms
 {
     /// <summary>
     /// Vordesigntes Fenster zum zusammenfügen von Dateien
@@ -15,7 +15,7 @@ namespace PDF_Edit_Froms.Forms
     class CombineFilesForm : StyleForm
     {
         private List<string> Documents = new List<string>();
-        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
 
         public CombineFilesForm(string windowTitle, string windowName) : base(windowTitle, windowName)
         {
