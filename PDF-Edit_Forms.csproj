@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{90BA9236-8A00-4488-99A0-4D98CE1E1C38}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>PDF_Edit_Froms</RootNamespace>
-    <AssemblyName>PDF-Edit_Froms</AssemblyName>
+    <RootNamespace>PDF_Edit_Forms</RootNamespace>
+    <AssemblyName>PDF-Edit_Forms</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
