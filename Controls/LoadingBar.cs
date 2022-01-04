@@ -1,6 +1,6 @@
-﻿using System.Windows.Forms;
+using System.Windows.Forms;
 
-namespace PDF_Edit_Froms.Controls
+namespace PDF_Edit_Forms.Controls
 {
     public class LoadingBar : Form
     {
